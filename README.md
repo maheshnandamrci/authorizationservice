@@ -160,8 +160,8 @@ Internally invokes DELETE http://localhost:9080/assignement/profile
 
  ![image](https://user-images.githubusercontent.com/54699915/135016488-b62d95c5-f21b-4e1a-a9b7-7d136bc7059c.png)
 
-* The steps to run it is - Run project 1 on port 1 and run project 2 on port 2 and run the packaging project 3 on port 3. (3 different ports)
-* But I used only project 1 and project 2 making project 1 (Auth Service) as a Gateway and finished the testing also.
+* The steps to run it is - Run project 1 on port 1 and run project 2 on port 2. (2 different ports) 
+* I used only project 1 (Authorization Service) as a Gateway to access the Userprofile serviece API's  and finished the testing.
 * I used the @RequestMapping(value = "assignement") in both of my Restcontroller so my API's endpoints will have "assignement" in them.
 * Postman collection cannot be attached here, I will be sending them in email as well as the Database screenshots of my unit testing.
 
