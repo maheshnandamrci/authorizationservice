@@ -18,6 +18,7 @@ import com.amdocs.media.authorizationservice.dao.RegistrationForm;
 import com.amdocs.media.authorizationservice.repository.AuthorizationDetailsRepository;
 import com.amdocs.media.authorizationservice.repository.RegistrationServiceRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class AuthorizationService {
@@ -38,6 +39,9 @@ public class AuthorizationService {
 
 	@Autowired
 	private AuthorizationService authorizationService;
+
+	@Autowired
+	ObjectMapper mapper = new ObjectMapper();
 
 	@Autowired
 	private KafkaTemplate<String, String> kafkaTemplate;
@@ -134,7 +138,7 @@ public class AuthorizationService {
 			logger.info("Posting " + loginFormVO.getOperation()
 					+ "UserProfile message to Kafka topic");
 
-			 sendMessage(mapper.writeValueAsString(loginFormVO));
+			sendMessage(mapper.writeValueAsString(loginFormVO));
 
 			logger.info("Create user profile response - " + responseMessage);
 
@@ -149,7 +153,7 @@ public class AuthorizationService {
 			logger.info("Posting " + loginFormVO.getOperation()
 					+ "UserProfile message to Kafka topic");
 
-			 sendMessage(mapper.writeValueAsString(loginFormVO));
+			sendMessage(mapper.writeValueAsString(loginFormVO));
 
 			logger.info("Update user profile response - " + responseMessage);
 
@@ -166,7 +170,7 @@ public class AuthorizationService {
 			logger.info("Posting " + loginFormVO.getOperation()
 					+ "UserProfile message to Kafka topic");
 
-			 sendMessage(mapper.writeValueAsString(loginFormVO));
+			sendMessage(mapper.writeValueAsString(loginFormVO));
 
 			logger.info("Delete user profile response - " + responseMessage);
 		}
