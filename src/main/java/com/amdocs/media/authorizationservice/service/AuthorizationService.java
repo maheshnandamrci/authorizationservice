@@ -7,16 +7,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import reactor.core.publisher.Mono;
 
 import com.amdocs.media.authorizationservice.config.LoginFormVO;
 import com.amdocs.media.authorizationservice.config.UserConstants;
-import com.amdocs.media.authorizationservice.config.UserProfileRequest;
 import com.amdocs.media.authorizationservice.dao.AuthorizationDetails;
 import com.amdocs.media.authorizationservice.dao.RegistrationForm;
 import com.amdocs.media.authorizationservice.repository.AuthorizationDetailsRepository;
 import com.amdocs.media.authorizationservice.repository.RegistrationServiceRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class AuthorizationService {
@@ -24,7 +25,10 @@ public class AuthorizationService {
 	Logger logger = LoggerFactory.getLogger(AuthorizationService.class);
 
 	@Autowired
-	RestTemplate restTemplate;
+	private RestTemplate restTemplate;
+
+	@Autowired
+	private WebClient.Builder webClientBuilder;
 
 	@Autowired
 	private RegistrationServiceRepository registrationServiceRepo;
@@ -123,32 +127,49 @@ public class AuthorizationService {
 			/*
 			 * invoking user profile create profile API using restTemplate
 			 */
-			UserProfileRequest createUserRequest = new UserProfileRequest(
-					loginFormVO.getAddress(), loginFormVO.getPhoneNumber());
 			responseMessage = restTemplate.postForObject(
-					UserConstants.USER_PROFILE_ENDPOINT_URL, createUserRequest,
+					UserConstants.USER_PROFILE_ENDPOINT_URL, loginFormVO,
 					String.class);
 
-			logger.info("User Profile created - " + responseMessage);
+			logger.info("Posting " + loginFormVO.getOperation()
+					+ "UserProfile message to Kafka topic");
+
+			 sendMessage(mapper.writeValueAsString(loginFormVO));
+
+			logger.info("Create user profile response - " + responseMessage);
+
 		} else if (loginFormVO.getOperation().equalsIgnoreCase(
 				UserConstants.UPDATE)) {
 
-			/*
-			 * converting the request object to json string using mapper and
-			 * sending message to kafka topic
-			 */
+			responseMessage = webClientBuilder.build().put()
+					.uri(UserConstants.USER_PROFILE_ENDPOINT_URL)
+					.body(Mono.just(loginFormVO), LoginFormVO.class).retrieve()
+					.bodyToMono(String.class).block();
 
-			ObjectMapper mapper = new ObjectMapper();
-			sendMessage(mapper.writeValueAsString(loginFormVO));
+			logger.info("Posting " + loginFormVO.getOperation()
+					+ "UserProfile message to Kafka topic");
 
-			responseMessage = UserConstants.USER_PROFILE_UPDATED;
+			 sendMessage(mapper.writeValueAsString(loginFormVO));
+
+			logger.info("Update user profile response - " + responseMessage);
+
 		} else if (loginFormVO.getOperation().equalsIgnoreCase(
 				UserConstants.DELETE)) {
-			ObjectMapper mapper = new ObjectMapper();
-			sendMessage(mapper.writeValueAsString(loginFormVO));
-			responseMessage = UserConstants.USER_PROFILE_DELETED;
+
+			webClientBuilder
+					.build()
+					.delete()
+					.uri(UserConstants.USER_PROFILE_ENDPOINT_URL + "/"
+							+ loginFormVO.getPhoneNumber()).retrieve()
+					.bodyToMono(Void.class).block();
+
+			logger.info("Posting " + loginFormVO.getOperation()
+					+ "UserProfile message to Kafka topic");
+
+			 sendMessage(mapper.writeValueAsString(loginFormVO));
+
+			logger.info("Delete user profile response - " + responseMessage);
 		}
 		return responseMessage;
 	}
-
 }
